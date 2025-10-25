@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Dashboard</title>
+	<style>
+		:root {
+			--bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+			--text-color: #fff;
+		}
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		body {
+			width: 100vw;
+			height: 100vh;
+			background: var(--bg-gradient);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: var(--text-color);
+		}
+		#animation-bg {
+			position: fixed;
+			top: 0; left: 0; width: 100vw; height: 100vh;
+			z-index: 0;
+		}
+		.container {
+			position: relative;
+			z-index: 1;
+			max-width: 800px;
+			margin: 0 auto;
+			text-align: center;
+		}
+		.card { 
+			border: 1px solid rgba(255, 255, 255, 0.2); 
+			padding: 30px; 
+			border-radius: 15px; 
+			background: rgba(255, 255, 255, 0.05);
+			backdrop-filter: blur(10px);
+			margin-top: 20px;
+		}
+		.error { color: #ff6b6b; }
+		.success { color: #51cf66; }
+		nav a { 
+			margin-right: 12px; 
+			color: #00c6ff;
+			text-decoration: none;
+			padding: 8px 16px;
+			border-radius: 20px;
+			background: rgba(0, 198, 255, 0.1);
+			transition: background 0.3s;
+		}
+		nav a:hover { background: rgba(0, 198, 255, 0.2); }
+		h1 { 
+			font-size: 2.5em;
+			margin-bottom: 1em;
+			text-shadow: 0 0 20px #00c6ff;
+		}
+		form { margin-top: 20px; }
+		input[type="file"] { 
+			margin-bottom: 15px;
+			color: #fff;
+		}
+		button { 
+			padding: 12px 24px; 
+			background: #00c6ff;
+			color: #fff;
+			border: none;
+			border-radius: 8px;
+			font-size: 1rem;
+			cursor: pointer;
+			transition: background 0.3s;
+		}
+		button:hover { background: #0072ff; }
+		.success a { 
+			color: #00c6ff;
+			text-decoration: none;
+			font-weight: bold;
+		}
+		.success a:hover { text-decoration: underline; }
+	</style>
+</head>
+<body>
+	<canvas id="animation-bg"></canvas>
+	<div class="container">
+		<nav>
+			<a href="/">Home</a>
+			<a href="/logout">Logout</a>
+			<a href="/story">Generate Story</a>
+		</nav>
+		<h1>Detect Emotion</h1>
+		<div class="card">
+			<h3>Choose Audio File</h3>
+			<form method="POST" enctype="multipart/form-data">
+				<input type="file" name="file" accept="audio/*" required>
+				<button type="submit">Analyze File</button>
+			</form>
+		</div>
+		<div class="card">
+			<h3>Record Audio Now</h3>
+			<div>
+				<button id="recordBtn">Start Recording</button>
+				<button id="stopBtn" disabled>Stop & Analyze</button>
+				<div style="font-size: 0.9rem; opacity: 0.85; margin-top: 6px;">Records directly in WAV format for better compatibility.</div>
+			</div>
+			<audio id="preview" controls style="width:100%; margin-top:10px; display:none;"></audio>
+		</div>
+		{% if error %}
+			<p class="error">{{ error }}</p>
+		{% endif %}
+		{% if emotion %}
+			<p class="success">Detected Emotion: <strong>{{ emotion }}</strong></p>
+			<p class="success"><a href="/story">Generate story based on this emotion</a></p>
+		{% endif %}
+	</div>
+	<script>
+	// Animated particles background
+	const canvas = document.getElementById('animation-bg');
+	const ctx = canvas.getContext('2d');
+	let width = window.innerWidth;
+	let height = window.innerHeight;
+	canvas.width = width;
+	canvas.height = height;
+	let particles = [];
+	const numParticles = 80;
+	
+	function randomColor() {
+		const colors = ['#00c6ff', '#0072ff', '#fff', '#2c5364'];
+		return colors[Math.floor(Math.random() * colors.length)];
+	}
+	
+	function createParticles() {
+		particles = [];
+		for (let i = 0; i < numParticles; i++) {
+			particles.push({
+				x: Math.random() * width,
+				y: Math.random() * height,
+				r: Math.random() * 2 + 1,
+				dx: (Math.random() - 0.5) * 0.7,
+				dy: (Math.random() - 0.5) * 0.7,
+				color: randomColor()
+			});
+		}
+	}
+	
+	function drawParticles() {
+		ctx.clearRect(0, 0, width, height);
+		for (let p of particles) {
+			ctx.beginPath();
+			ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+			ctx.fillStyle = p.color;
+			ctx.globalAlpha = 0.7;
+			ctx.fill();
+			ctx.globalAlpha = 1.0;
+			p.x += p.dx;
+			p.y += p.dy;
+			if (p.x < 0 || p.x > width) p.dx *= -1;
+			if (p.y < 0 || p.y > height) p.dy *= -1;
+		}
+		requestAnimationFrame(drawParticles);
+	}
+	
+	window.addEventListener('resize', () => {
+		width = window.innerWidth;
+		height = window.innerHeight;
+		canvas.width = width;
+		canvas.height = height;
+		createParticles();
+	});
+	
+	createParticles();
+	drawParticles();
+
+	// WAV Recording using Web Audio API
+	const recordBtn = document.getElementById('recordBtn');
+	const stopBtn = document.getElementById('stopBtn');
+	const preview = document.getElementById('preview');
+	let audioContext, mediaStreamSource, processor;
+	let isRecording = false;
+	let audioData = [];
+
+	// WAV file creation function
+	function encodeWAV(samples, sampleRate) {
+		const buffer = new ArrayBuffer(44 + samples.length * 2);
+		const view = new DataView(buffer);
+		
+		// WAV header
+		const writeString = (offset, string) => {
+			for (let i = 0; i < string.length; i++) {
+				view.setUint8(offset + i, string.charCodeAt(i));
+			}
+		};
+		
+		writeString(0, 'RIFF');
+		view.setUint32(4, 36 + samples.length * 2, true);
+		writeString(8, 'WAVE');
+		writeString(12, 'fmt ');
+		view.setUint32(16, 16, true);
+		view.setUint16(20, 1, true);
+		view.setUint16(22, 1, true);
+		view.setUint32(24, sampleRate, true);
+		view.setUint32(28, sampleRate * 2, true);
+		view.setUint16(32, 2, true);
+		view.setUint16(34, 16, true);
+		writeString(36, 'data');
+		view.setUint32(40, samples.length * 2, true);
+		
+		// Convert samples to 16-bit PCM
+		let offset = 44;
+		for (let i = 0; i < samples.length; i++) {
+			const sample = Math.max(-1, Math.min(1, samples[i]));
+			view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+			offset += 2;
+		}
+		
+		return buffer;
+	}
+
+	async function startRecording(){
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			audioContext = new (window.AudioContext || window.webkitAudioContext)();
+			mediaStreamSource = audioContext.createMediaStreamSource(stream);
+			
+			// Use ScriptProcessorNode for compatibility
+			processor = audioContext.createScriptProcessor(4096, 1, 1);
+			audioData = [];
+			
+			processor.onaudioprocess = (e) => {
+				if (isRecording) {
+					const inputData = e.inputBuffer.getChannelData(0);
+					audioData.push(new Float32Array(inputData));
+				}
+			};
+			
+			mediaStreamSource.connect(processor);
+			processor.connect(audioContext.destination);
+			
+			isRecording = true;
+			recordBtn.disabled = true;
+			stopBtn.disabled = false;
+			console.log('Recording started - WAV format');
+		} catch (err) { 
+			alert('Microphone permission denied or unavailable.'); 
+		}
+	}
+
+	function stopRecording(){
+		if (!isRecording) return;
+		
+		isRecording = false;
+		recordBtn.disabled = false;
+		stopBtn.disabled = true;
+		
+		// Stop audio processing
+		if (processor) processor.disconnect();
+		if (mediaStreamSource) mediaStreamSource.disconnect();
+		if (audioContext) audioContext.close();
+		
+		// Combine all audio data
+		let totalLength = 0;
+		for (let i = 0; i < audioData.length; i++) {
+			totalLength += audioData[i].length;
+		}
+		
+		const combinedData = new Float32Array(totalLength);
+		let offset = 0;
+		for (let i = 0; i < audioData.length; i++) {
+			combinedData.set(audioData[i], offset);
+			offset += audioData[i].length;
+		}
+		
+		// Create WAV file
+		const sampleRate = audioContext.sampleRate || 44100;
+		const wavBuffer = encodeWAV(combinedData, sampleRate);
+		const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+		
+		// Show preview
+		preview.src = URL.createObjectURL(wavBlob);
+		preview.style.display = 'block';
+		
+		// Submit to dashboard
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = '/dashboard';
+		form.enctype = 'multipart/form-data';
+		
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.name = 'file';
+		
+		const file = new File([wavBlob], `recording_${Date.now()}.wav`, { type: 'audio/wav' });
+		const dt = new DataTransfer();
+		dt.items.add(file);
+		fileInput.files = dt.files;
+		
+		form.appendChild(fileInput);
+		document.body.appendChild(form);
+		form.submit();
+		
+		console.log('Recording stopped - WAV file created');
+	}
+
+	recordBtn.addEventListener('click', startRecording);
+	stopBtn.addEventListener('click', stopRecording);
+	</script>
+</body>
+</html>
+
+

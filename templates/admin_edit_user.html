@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User - MagicTales Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        :root {
+            --bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+            --text-color: #fff;
+        }
+        
+        #animation-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            color: #ff6b6b;
+            font-size: 1.8rem;
+        }
+        
+        .nav-links a {
+            margin-left: 1rem;
+            padding: 8px 16px;
+            background: #ff6b6b;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: #ee5a24;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 50;
+        }
+        
+        .edit-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .edit-container h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+            margin-right: 1rem;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .emotion-history {
+            margin-top: 1rem;
+        }
+        
+        .emotion-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="animation-bg"></canvas>
+    <div class="header">
+        <h1>✏️ Edit User: {{ username }}</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_users') }}">👥 Users</a>
+            <a href="{{ url_for('admin_logout') }}">🚪 Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <a href="{{ url_for('admin_users') }}" class="back-btn">← Back to Users</a>
+        
+        <div class="edit-container">
+            <h2>User Information</h2>
+            
+            <div class="user-info">
+                <h3>Current User Data</h3>
+                <div class="info-item">
+                    <span><strong>Username:</strong></span>
+                    <span>{{ username }}</span>
+                </div>
+                <div class="info-item">
+                    <span><strong>Total Emotions:</strong></span>
+                    <span>{{ user_info.emotions|length }}</span>
+                </div>
+                <div class="info-item">
+                    <span><strong>Profile Picture:</strong></span>
+                    <span>{{ "✅ Uploaded" if user_info.profile_pic else "❌ Not uploaded" }}</span>
+                </div>
+                <div class="info-item">
+                    <span><strong>Current Status:</strong></span>
+                    <span>{{ user_info.get('status', 'Active') }}</span>
+                </div>
+                
+                {% if user_info.emotions %}
+                <div class="emotion-history">
+                    <h4>Emotion History:</h4>
+                    {% for emotion in user_info.emotions %}
+                    <span class="emotion-tag">{{ emotion }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin_update_user', username=username) }}">
+                <div class="form-group">
+                    <label for="bio">User Bio</label>
+                    <textarea id="bio" name="bio" placeholder="Enter user bio or notes...">{{ user_info.get('bio', '') }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="status">User Status</label>
+                    <select id="status" name="status">
+                        <option value="Active" {{ 'selected' if user_info.get('status') == 'Active' else '' }}>Active</option>
+                        <option value="Inactive" {{ 'selected' if user_info.get('status') == 'Inactive' else '' }}>Inactive</option>
+                        <option value="Suspended" {{ 'selected' if user_info.get('status') == 'Suspended' else '' }}>Suspended</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">💾 Update User</button>
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">❌ Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+    // Animated particles background (same as home page)
+    const canvas = document.getElementById('animation-bg');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    let particles = [];
+    const numParticles = 80;
+    
+    function randomColor() {
+        const colors = ['#00c6ff', '#0072ff', '#fff', '#2c5364'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function createParticles() {
+        particles = [];
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 2 + 1,
+                dx: (Math.random() - 0.5) * 0.7,
+                dy: (Math.random() - 0.5) * 0.7,
+                color: randomColor()
+            });
+        }
+    }
+    
+    function drawParticles() {
+        ctx.clearRect(0, 0, width, height);
+        for (let p of particles) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = 0.7;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            p.x += p.dx;
+            p.y += p.dy;
+            if (p.x < 0 || p.x > width) p.dx *= -1;
+            if (p.y < 0 || p.y > height) p.dy *= -1;
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        createParticles();
+    });
+    
+    createParticles();
+    drawParticles();
+    </script>
+</body>
+</html>

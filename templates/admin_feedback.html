@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Management - MagicTales Admin</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+            --text-color: #fff;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: auto; /* Allow page scrolling */
+        }
+        body {
+            width: 100vw;
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            color: #333;
+        }
+        #animation-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+        .header h1 {
+            color: #ff6b6b;
+            font-size: 1.8rem;
+        }
+        .nav-links a {
+            margin-left: 1rem;
+            padding: 8px 16px;
+            background: #ff6b6b;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .nav-links a:hover {
+            background: #ee5a24;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 5;
+        }
+        .feedback-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .feedback-container h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .feedback-item {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .user-info {
+            font-weight: bold;
+            color: #333;
+        }
+        .rating-display {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .feedback-text {
+            background: white;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            border-left: 3px solid #00c6ff;
+        }
+        .admin-reply-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 5px;
+        }
+        .admin-reply-section h4 {
+            color: #ff6b6b;
+            margin-bottom: 0.5rem;
+        }
+        .reply-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        .reply-form textarea {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 60px;
+        }
+        .reply-form button {
+            padding: 8px 16px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            height: fit-content;
+        }
+        .reply-form button:hover {
+            background: #ee5a24;
+        }
+        .existing-reply {
+            background: rgba(40, 167, 69, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+            border-left: 3px solid #28a745;
+        }
+        .existing-reply-header {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        .back-btn:hover {
+            background: #5a6fd8;
+        }
+        .no-feedback {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="animation-bg"></canvas>
+    <div class="header">
+        <h1>💬 Feedback Management</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_users') }}">👥 Users</a>
+            <a href="{{ url_for('admin_profile') }}">👤 Profile</a>
+            <a href="{{ url_for('admin_logout') }}">🚪 Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <a href="{{ url_for('admin_dashboard') }}" class="back-btn">← Back to Dashboard</a>
+        
+        <div class="feedback-container">
+            <h2>User Feedback & Ratings</h2>
+            
+            {% if feedback %}
+            {% for item in feedback %}
+            <div class="feedback-item">
+                <div class="feedback-header">
+                    <div class="user-info">👤 {{ item.user }}</div>
+                    <div class="rating-display">
+                        {% for i in range(item.rating) %}⭐{% endfor %}
+                    </div>
+                    <div class="timestamp">{{ item.timestamp }}</div>
+                </div>
+                
+                <div class="feedback-text">
+                    {{ item.feedback }}
+                </div>
+                
+                <div class="admin-reply-section">
+                    {% if item.admin_reply %}
+                    <div class="existing-reply">
+                        <div class="existing-reply-header">✅ Admin Reply ({{ item.admin_reply.admin }}):</div>
+                        <p>{{ item.admin_reply.text }}</p>
+                        <small>{{ item.admin_reply.timestamp }}</small>
+                    </div>
+                    {% else %}
+                    <h4>💬 Reply to this feedback:</h4>
+                    <form method="POST" action="{{ url_for('admin_reply_feedback', feedback_id=item.id) }}" class="reply-form">
+                        <textarea name="reply" placeholder="Type your reply here..." required></textarea>
+                        <button type="submit">Send Reply</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="no-feedback">
+                <h3>No feedback yet</h3>
+                <p>User feedback will appear here once users start submitting ratings and comments.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+    // Animated particles background
+    const canvas = document.getElementById('animation-bg');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    let particles = [];
+    const numParticles = 80;
+    
+    function randomColor() {
+        const colors = ['#00c6ff', '#0072ff', '#fff', '#2c5364'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function createParticles() {
+        particles = [];
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 2 + 1,
+                dx: (Math.random() - 0.5) * 0.7,
+                dy: (Math.random() - 0.5) * 0.7,
+                color: randomColor()
+            });
+        }
+    }
+    
+    function drawParticles() {
+        ctx.clearRect(0, 0, width, height);
+        for (let p of particles) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = 0.7;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            p.x += p.dx;
+            p.y += p.dy;
+            if (p.x < 0 || p.x > width) p.dx *= -1;
+            if (p.y < 0 || p.y > height) p.dy *= -1;
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        createParticles();
+    });
+    
+    createParticles();
+    drawParticles();
+    </script>
+</body>
+</html>
+

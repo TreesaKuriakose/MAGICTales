@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - MagicTales Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        :root {
+            --bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+            --text-color: #fff;
+        }
+        
+        #animation-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            color: #ff6b6b;
+            font-size: 1.8rem;
+        }
+        
+        .nav-links a {
+            margin-left: 1rem;
+            padding: 8px 16px;
+            background: #ff6b6b;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s;
+            cursor: pointer;
+            display: inline-block;
+        }
+        
+        .nav-links a:hover {
+            background: #ee5a24;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 50;
+        }
+        
+        .users-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .users-container h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .user-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s;
+        }
+        
+        .user-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .user-stats {
+            margin: 1rem 0;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        .emotion-list {
+            margin-top: 1rem;
+        }
+        
+        .emotion-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+        
+        .action-buttons {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+        
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-view {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background: #218838;
+        }
+        
+        .no-users {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 1rem;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="animation-bg"></canvas>
+    <div class="header">
+        <h1>👥 User Management</h1>
+        <div class="nav-links">
+            <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+            <a href="{{ url_for('admin_profile') }}">👤 Profile</a>
+            <a href="{{ url_for('admin_logout') }}">🚪 Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <a href="{{ url_for('admin_dashboard') }}" class="back-btn">← Back to Dashboard</a>
+        
+        <div class="users-container">
+            <h2>Registered Users</h2>
+            
+            {% if users %}
+            <div class="user-grid">
+                {% for username, user_info in users.items() %}
+                <div class="user-card">
+                    <div class="user-name">👤 {{ username }}</div>
+                    
+                    <div class="user-stats">
+                        <div class="stat-item">
+                            <span>Total Emotions:</span>
+                            <strong>{{ user_info.emotions|length }}</strong>
+                        </div>
+                        <div class="stat-item">
+                            <span>Profile Picture:</span>
+                            <span>{{ "✅ Yes" if user_info.profile_pic else "❌ No" }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Status:</span>
+                            <span>{{ user_info.get('status', 'Offline') }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Logged In:</span>
+                            <span>{{ '✅ Yes' if user_info.get('is_logged_in') else '❌ No' }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if user_info.emotions %}
+                    <div class="emotion-list">
+                        <strong>Recent Emotions:</strong><br>
+                        {% for emotion in user_info.emotions[-5:] %}
+                        <span class="emotion-tag">{{ emotion }}</span>
+                        {% endfor %}
+                        {% if user_info.emotions|length > 5 %}
+                        <span class="emotion-tag">+{{ user_info.emotions|length - 5 }} more</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="action-buttons">
+                        <a href="{{ url_for('admin_edit_user', username=username) }}" class="btn btn-edit">✏️ Edit</a>
+                        <a href="{{ url_for('admin_edit_user', username=username) }}" class="btn btn-view">👁️ View Details</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-users">
+                <h3>No users found</h3>
+                <p>Users will appear here once they register and start using the application.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+    // Animated particles background (same as home page)
+    const canvas = document.getElementById('animation-bg');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    let particles = [];
+    const numParticles = 80;
+    
+    function randomColor() {
+        const colors = ['#00c6ff', '#0072ff', '#fff', '#2c5364'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function createParticles() {
+        particles = [];
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 2 + 1,
+                dx: (Math.random() - 0.5) * 0.7,
+                dy: (Math.random() - 0.5) * 0.7,
+                color: randomColor()
+            });
+        }
+    }
+    
+    function drawParticles() {
+        ctx.clearRect(0, 0, width, height);
+        for (let p of particles) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = 0.7;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            p.x += p.dx;
+            p.y += p.dy;
+            if (p.x < 0 || p.x > width) p.dx *= -1;
+            if (p.y < 0 || p.y > height) p.dy *= -1;
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        createParticles();
+    });
+    
+    createParticles();
+    drawParticles();
+    
+    // Debug navigation links
+    document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('.nav-links a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                console.log('Nav link clicked:', this.href);
+                // Let the default behavior happen
+            });
+        });
+        
+        const backBtn = document.querySelector('.back-btn');
+        if (backBtn) {
+            backBtn.addEventListener('click', function(e) {
+                console.log('Back button clicked:', this.href);
+                // Let the default behavior happen
+            });
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Register</title>
+	<style>
+		:root {
+			--bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+			--text-color: #fff;
+		}
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+		body {
+			width: 100vw;
+			height: 100vh;
+			background: var(--bg-gradient);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: var(--text-color);
+		}
+		#animation-bg {
+			position: fixed;
+			top: 0; left: 0; width: 100vw; height: 100vh;
+			z-index: 0;
+		}
+		.container {
+			position: relative;
+			z-index: 1;
+			max-width: 750px;
+			margin: 0 auto;
+			text-align: center;
+		}
+		.error { color: #ff6b6b; }
+		form { display: grid; gap: 12px; }
+		input { 
+			padding: 20px; 
+			font-size: 1.2rem; 
+			border: none;
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.1);
+			color: #fff;
+			backdrop-filter: blur(10px);
+			width: 100%;
+			max-width: 500px;
+		}
+		input::placeholder { color: rgba(255, 255, 255, 0.7); }
+		button { 
+			padding: 24px 48px; 
+			background: #00c6ff;
+			color: #fff;
+			border: none;
+			border-radius: 15px;
+			font-size: 1.3rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.3s;
+			width: 100%;
+			max-width: 500px;
+		}
+		button:hover { background: #0072ff; }
+		nav a { 
+			margin-right: 12px; 
+			color: #00c6ff;
+			text-decoration: none;
+			padding: 8px 16px;
+			border-radius: 20px;
+			background: rgba(0, 198, 255, 0.1);
+			transition: background 0.3s;
+		}
+		nav a:hover { background: rgba(0, 198, 255, 0.2); }
+		h1 { 
+			font-size: 2.5em;
+			margin-bottom: 1em;
+			text-shadow: 0 0 20px #00c6ff;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="animation-bg"></canvas>
+	<div class="container">
+		<nav>
+			<a href="/">Home</a>
+			<a href="/login">Login</a>
+		</nav>
+		<h1>Create Account</h1>
+		{% if error %}<p class="error">{{ error }}</p>{% endif %}
+		<form method="POST">
+			<input type="text" name="username" placeholder="Username" required>
+			<input type="email" name="email" placeholder="Email" required>
+			<input type="password" name="password" placeholder="Password" required>
+			<button type="submit">Register</button>
+		</form>
+	</div>
+	<script>
+	// Animated particles background
+	const canvas = document.getElementById('animation-bg');
+	const ctx = canvas.getContext('2d');
+	let width = window.innerWidth;
+	let height = window.innerHeight;
+	canvas.width = width;
+	canvas.height = height;
+	let particles = [];
+	const numParticles = 80;
+	
+	function randomColor() {
+		const colors = ['#00c6ff', '#0072ff', '#fff', '#2c5364'];
+		return colors[Math.floor(Math.random() * colors.length)];
+	}
+	
+	function createParticles() {
+		particles = [];
+		for (let i = 0; i < numParticles; i++) {
+			particles.push({
+				x: Math.random() * width,
+				y: Math.random() * height,
+				r: Math.random() * 2 + 1,
+				dx: (Math.random() - 0.5) * 0.7,
+				dy: (Math.random() - 0.5) * 0.7,
+				color: randomColor()
+			});
+		}
+	}
+	
+	function drawParticles() {
+		ctx.clearRect(0, 0, width, height);
+		for (let p of particles) {
+			ctx.beginPath();
+			ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+			ctx.fillStyle = p.color;
+			ctx.globalAlpha = 0.7;
+			ctx.fill();
+			ctx.globalAlpha = 1.0;
+			p.x += p.dx;
+			p.y += p.dy;
+			if (p.x < 0 || p.x > width) p.dx *= -1;
+			if (p.y < 0 || p.y > height) p.dy *= -1;
+		}
+		requestAnimationFrame(drawParticles);
+	}
+	
+	window.addEventListener('resize', () => {
+		width = window.innerWidth;
+		height = window.innerHeight;
+		canvas.width = width;
+		canvas.height = height;
+		createParticles();
+	});
+	
+	createParticles();
+	drawParticles();
+	</script>
+</body>
+</html>
+
+

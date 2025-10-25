@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback - MagicTales</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+            --text-color: #fff;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+        }
+        #animation-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0;
+        }
+        .feedback-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            color: #00c6ff;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 20px #00c6ff;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #00c6ff;
+            font-weight: 500;
+        }
+        .rating-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .rating-star {
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+        }
+        .rating-star:hover,
+        .rating-star.active {
+            color: #ffc107;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(0, 198, 255, 0.3);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            resize: vertical;
+            min-height: 100px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #00c6ff;
+        }
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .btn {
+            padding: 12px 24px;
+            background: #00c6ff;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #0072ff;
+        }
+        .success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #28a745;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #28a745;
+        }
+        .feedback-list {
+            margin-top: 2rem;
+        }
+        .feedback-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #00c6ff;
+        }
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .rating-display {
+            color: #ffc107;
+        }
+        .timestamp {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+        .admin-reply {
+            background: rgba(255, 107, 107, 0.1);
+            padding: 0.5rem;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+            border-left: 3px solid #ff6b6b;
+        }
+        .admin-reply-header {
+            color: #ff6b6b;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .links a {
+            color: #00c6ff;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 0 10px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="animation-bg"></canvas>
+    <div class="feedback-container">
+        <div class="header">
+            <h1>💬 Feedback & Rating</h1>
+            <p>Share your experience with MagicTales</p>
+        </div>
+        
+        {% if success %}
+        <div class="success">
+            ✅ Thank you for your feedback! We appreciate your input.
+        </div>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>Rating (1-5 stars)</label>
+                <div class="rating-group">
+                    <span class="rating-star" data-rating="1">⭐</span>
+                    <span class="rating-star" data-rating="2">⭐</span>
+                    <span class="rating-star" data-rating="3">⭐</span>
+                    <span class="rating-star" data-rating="4">⭐</span>
+                    <span class="rating-star" data-rating="5">⭐</span>
+                </div>
+                <input type="hidden" name="rating" id="rating-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="feedback">Your Feedback</label>
+                <textarea id="feedback" name="feedback" placeholder="Tell us about your experience with MagicTales..." required></textarea>
+            </div>
+            
+            <button type="submit" class="btn">Submit Feedback</button>
+        </form>
+        
+        {% if feedback %}
+        <div class="feedback-list">
+            <h3>Your Previous Feedback</h3>
+            {% for item in feedback %}
+            <div class="feedback-item">
+                <div class="feedback-header">
+                    <div class="rating-display">
+                        {% for i in range(item.rating) %}⭐{% endfor %}
+                    </div>
+                    <div class="timestamp">{{ item.timestamp }}</div>
+                </div>
+                <p>{{ item.feedback }}</p>
+                {% if item.admin_reply %}
+                <div class="admin-reply">
+                    <div class="admin-reply-header">👤 Admin Reply:</div>
+                    <p>{{ item.admin_reply.text }}</p>
+                    <small>{{ item.admin_reply.timestamp }}</small>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="links">
+            <a href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+            <a href="{{ url_for('index') }}">🏠 Home</a>
+        </div>
+    </div>
+    
+    <script>
+    // Animated particles background
+    const canvas = document.getElementById('animation-bg');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    let particles = [];
+    const numParticles = 80;
+    
+    function randomColor() {
+        const colors = ['#00c6ff', '#0072ff', '#fff', '#2c5364'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function createParticles() {
+        particles = [];
+        for (let i = 0; i < numParticles; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 2 + 1,
+                dx: (Math.random() - 0.5) * 0.7,
+                dy: (Math.random() - 0.5) * 0.7,
+                color: randomColor()
+            });
+        }
+    }
+    
+    function drawParticles() {
+        ctx.clearRect(0, 0, width, height);
+        for (let p of particles) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = 0.7;
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+            p.x += p.dx;
+            p.y += p.dy;
+            if (p.x < 0 || p.x > width) p.dx *= -1;
+            if (p.y < 0 || p.y > height) p.dy *= -1;
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    
+    // Rating system
+    const stars = document.querySelectorAll('.rating-star');
+    const ratingInput = document.getElementById('rating-input');
+    
+    stars.forEach((star, index) => {
+        star.addEventListener('click', () => {
+            const rating = index + 1;
+            ratingInput.value = rating;
+            
+            stars.forEach((s, i) => {
+                if (i < rating) {
+                    s.classList.add('active');
+                } else {
+                    s.classList.remove('active');
+                }
+            });
+        });
+    });
+    
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        createParticles();
+    });
+    
+    createParticles();
+    drawParticles();
+    </script>
+</body>
+</html>
+
+
+
+
+
+

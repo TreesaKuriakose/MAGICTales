@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Profile</title>
+	<style>
+		:root {
+			--bg-gradient: linear-gradient(135deg, #101820, #16222a, #0f2027);
+			--text-color: #fff;
+		}
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+			overflow: auto; /* allow scrolling */
+		}
+		body {
+			width: 100vw;
+			min-height: 100vh;
+			background: var(--bg-gradient);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: var(--text-color);
+		}
+		#animation-bg {
+			position: fixed;
+			top: 0; left: 0; width: 100vw; height: 100vh;
+			z-index: 0;
+		}
+		.container {
+			position: relative;
+			z-index: 1;
+			max-width: 720px;
+			margin: 0 auto;
+			text-align: center;
+		}
+		.card { 
+			border: 1px solid rgba(255, 255, 255, 0.2); 
+			padding: 25px; 
+			border-radius: 15px; 
+			background: rgba(255, 255, 255, 0.05);
+			backdrop-filter: blur(10px);
+			margin-bottom: 20px;
+		}
+		.error { color: #ff6b6b; }
+		.message { color: #51cf66; }
+		nav a { 
+			margin-right: 12px; 
+			color: #00c6ff;
+			text-decoration: none;
+			padding: 8px 16px;
+			border-radius: 20px;
+			background: rgba(0, 198, 255, 0.1);
+			transition: background 0.3s;
+		}
+		nav a:hover { background: rgba(0, 198, 255, 0.2); }
+		h1 { 
+			font-size: 2.5em;
+			margin-bottom: 1em;
+			text-shadow: 0 0 20px #00c6ff;
+		}
+		h3 { 
+			color: #00c6ff;
+			margin-bottom: 15px;
+		}
+		img { 
+			max-width: 160px; 
+			display: block; 
+			margin: 15px auto; 
+			border-radius: 10px;
+			border: 2px solid rgba(0, 198, 255, 0.3);
+		}
+		form { margin-top: 16px; }
+		input { 
+			padding: 10px; 
+			margin-bottom: 10px;
+			border: none;
+			border-radius: 8px;
+			background: rgba(255, 255, 255, 0.1);
+			color: #fff;
+			width: 100%;
+			max-width: 300px;
+		}
+		input::placeholder { color: rgba(255, 255, 255, 0.7); }
+		button { 
+			padding: 10px 20px; 
+			background: #00c6ff;
+			color: #fff;
+			border: none;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: background 0.3s;
+		}
+		button:hover { background: #0072ff; }
+	</style>
+</head>
+<body>
+	<canvas id="animation-bg"></canvas>
+	<div class="container">
+		<nav>
+			<a href="/">🏠 Home</a>
+			<a href="/dashboard">📊 Dashboard</a>
+			<a href="/logout">🚪 Logout</a>
+		</nav>
+		{% if user == 'admin' %}
+		<nav style="margin-top:10px;">
+			<a href="{{ url_for('admin_dashboard') }}">📊 Admin Dashboard</a>
+			<a href="{{ url_for('admin_users') }}">👥 Users</a>
+			<a href="{{ url_for('admin_feedback') }}">💬 Feedback</a>
+			<a href="{{ url_for('admin_logout') }}">🚪 Admin Logout</a>
+		</nav>
+		{% endif %}
+		<h1>👤 Profile: {{ user }}</h1>
+		{% if error %}<p class="error">{{ error }}</p>{% endif %}
+		{% if message %}<p class="message">{{ message }}</p>{% endif %}
+		
+		<div class="card">
+			<h3>📸 Profile Picture</h3>
+			{% if profile_pic %}
+				<img src="/uploads/{{ profile_pic }}" alt="Profile picture">
+			{% else %}
+				<p>No profile picture uploaded.</p>
+			{% endif %}
+			<form method="POST" enctype="multipart/form-data">
+				<input type="file" name="profile_pic" accept="image/*">
+				<button type="submit">Upload Picture</button>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h3>🔒 Change Password</h3>
+			<form method="POST">
+				<input type="password" name="new_password" placeholder="New Password">
+				<button type="submit">Change Password</button>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h3>✏️ Edit Profile</h3>
+			<form method="POST">
+				<input type="text" name="edit_profile" placeholder="Bio or other info">
+				<button type="submit">Save Profile</button>
+			</form>
+		</div>
+		
+		<div class="card">
+			<h3>🏠 Quick Navigation</h3>
+			<div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+				<a href="/" style="background: rgba(0, 198, 255, 0.2); padding: 10px 20px; border-radius: 20px; text-decoration: none; color: #00c6ff; transition: background 0.3s;">🏠 Home</a>
+				<a href="/dashboard" style="background: rgba(0, 198, 255, 0.2); padding: 10px 20px; border-radius: 20px; text-decoration: none; color: #00c6ff; transition: background 0.3s;">📊 Dashboard</a>
+				{% if user != 'admin' %}
+				<a href="/story" style="background: rgba(0, 198, 255, 0.2); padding: 10px 20px; border-radius: 20px; text-decoration: none; color: #00c6ff; transition: background 0.3s;">📖 Story</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+	<script>
+	// Animated particles background
+	const canvas = document.getElementById('animation-bg');
+	const ctx = canvas.getContext('2d');
+	let width = window.innerWidth;
+	let height = window.innerHeight;
+	canvas.width = width;
+	canvas.height = height;
+	let particles = [];
+	const numParticles = 80;
+	
+	function randomColor() {
+		const colors = ['#00c6ff', '#00c6ff', '#fff', '#2c5364'];
+		return colors[Math.floor(Math.random() * colors.length)];
+	}
+	
+	function createParticles() {
+		particles = [];
+		for (let i = 0; i < numParticles; i++) {
+			particles.push({
+				x: Math.random() * width,
+				y: Math.random() * height,
+				r: Math.random() * 2 + 1,
+				dx: (Math.random() - 0.5) * 0.7,
+				dy: (Math.random() - 0.5) * 0.7,
+				color: randomColor()
+			});
+		}
+	}
+	
+	function drawParticles() {
+		ctx.clearRect(0, 0, width, height);
+		for (let p of particles) {
+			ctx.beginPath();
+			ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+			ctx.fillStyle = p.color;
+			ctx.globalAlpha = 0.7;
+			ctx.fill();
+			ctx.globalAlpha = 1.0;
+			p.x += p.dx;
+			p.y += p.dy;
+			if (p.x < 0 || p.x > width) p.dx *= -1;
+			if (p.y < 0 || p.y > height) p.dy *= -1;
+		}
+		requestAnimationFrame(drawParticles);
+	}
+	
+	window.addEventListener('resize', () => {
+		width = window.innerWidth;
+		height = window.innerHeight;
+		canvas.width = width;
+		canvas.height = height;
+		createParticles();
+	});
+	
+	createParticles();
+	drawParticles();
+	</script>
+</body>
+</html>
+
+
