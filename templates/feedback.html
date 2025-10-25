@@ -126,6 +126,10 @@
             margin-bottom: 1rem;
             border-left: 4px solid #00c6ff;
         }
+        .feedback-item.my-feedback {
+            background: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid #28a745;
+        }
         .feedback-header {
             display: flex;
             justify-content: space-between;
@@ -203,10 +207,17 @@
         
         {% if feedback %}
         <div class="feedback-list">
-            <h3>Your Previous Feedback</h3>
+            <h3>Community Feedback</h3>
+            <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-bottom: 1.5rem;">See what others are saying about MagicTales</p>
             {% for item in feedback %}
-            <div class="feedback-item">
+            <div class="feedback-item {% if item.user == current_user %}my-feedback{% endif %}">
                 <div class="feedback-header">
+                    <div>
+                        <strong style="color: #00c6ff;">👤 {{ item.user }}</strong>
+                        {% if item.user == current_user %}
+                        <span style="color: #28a745; font-size: 0.8rem; margin-left: 5px;">✓ You</span>
+                        {% endif %}
+                    </div>
                     <div class="rating-display">
                         {% for i in range(item.rating) %}⭐{% endfor %}
                     </div>

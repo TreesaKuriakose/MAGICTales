@@ -382,9 +382,9 @@ def feedback():
         _write_json_safe(feedback_path, all_feedback)
         success = True
 
-    # Show only this user's feedback
-    user_feedback = [f for f in all_feedback if f.get('user') == session['user']]
-    return render_template('feedback.html', success=success, feedback=user_feedback)
+    # Show ALL feedback from all users (sorted by newest first)
+    all_feedback_sorted = sorted(all_feedback, key=lambda x: x.get('timestamp', ''), reverse=True)
+    return render_template('feedback.html', success=success, feedback=all_feedback_sorted, current_user=session['user'])
 
 @app.route('/logout')
 def logout():
