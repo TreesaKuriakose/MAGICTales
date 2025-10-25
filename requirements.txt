@@ -1,0 +1,26 @@
+# Core Framework
+Flask==3.1.0
+python-dotenv==1.0.1
+
+# Machine Learning & Audio Processing
+torch==2.0.0
+librosa==0.10.0
+numpy==1.24.3
+scipy==1.10.1
+
+# Audio Conversion
+pydub==0.25.1
+
+# Web & Utilities
+Werkzeug==3.1.3
+Jinja2==3.1.6
+itsdangerous==2.2.0
+click==8.1.8
+blinker==1.9.0
+MarkupSafe==3.0.2
+
+# Optional: For Groq API (if using external package)
+# groq==0.4.0
+
+# Optional: For better audio format support
+# ffmpeg-python==0.2.0
