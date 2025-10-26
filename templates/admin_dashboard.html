@@ -192,6 +192,7 @@
         <div class="nav-links">
             <a href="{{ url_for('admin_profile') }}">👤 Profile</a>
             <a href="{{ url_for('admin_users') }}">👥 Users</a>
+            <a href="{{ url_for('admin_visualization') }}">📊 Visualization</a>
             <a href="{{ url_for('admin_logout') }}">🚪 Logout</a>
         </div>
     </div>
@@ -248,6 +249,10 @@
                 <a href="{{ url_for('admin_feedback') }}" class="action-btn">
                     <h3>💬 Feedback</h3>
                     <p>View and reply to user feedback</p>
+                </a>
+                <a href="{{ url_for('admin_visualization') }}" class="action-btn">
+                    <h3>📊 Visualization</h3>
+                    <p>View analytics with pie charts</p>
                 </a>
                 <a href="{{ url_for('admin_profile') }}" class="action-btn">
                     <h3>👤 Admin Profile</h3>

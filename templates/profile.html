@@ -18,10 +18,8 @@
 			width: 100vw;
 			min-height: 100vh;
 			background: var(--bg-gradient);
-			display: flex;
-			align-items: center;
-			justify-content: center;
 			color: var(--text-color);
+			padding: 20px 0;
 		}
 		#animation-bg {
 			position: fixed;
@@ -83,6 +81,7 @@
 			max-width: 300px;
 		}
 		input::placeholder { color: rgba(255, 255, 255, 0.7); }
+		textarea::placeholder { color: rgba(255, 255, 255, 0.7); }
 		button { 
 			padding: 10px 20px; 
 			background: #00c6ff;
@@ -126,6 +125,13 @@
 				<input type="file" name="profile_pic" accept="image/*">
 				<button type="submit">Upload Picture</button>
 			</form>
+			
+			{% if bio %}
+			<div style="margin-top: 20px; padding: 15px; background: rgba(0, 198, 255, 0.1); border-radius: 10px; border-left: 4px solid #00c6ff;">
+				<h4 style="color: #00c6ff; margin-bottom: 10px; font-size: 1.1em;">📝 Bio</h4>
+				<p style="color: #fff; line-height: 1.6; text-align: left; margin: 0;">{{ bio }}</p>
+			</div>
+			{% endif %}
 		</div>
 		
 		<div class="card">
@@ -139,7 +145,7 @@
 		<div class="card">
 			<h3>✏️ Edit Profile</h3>
 			<form method="POST">
-				<input type="text" name="edit_profile" placeholder="Bio or other info">
+				<textarea name="edit_profile" placeholder="Enter your bio..." style="padding: 10px; margin-bottom: 10px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #fff; width: 100%; max-width: 300px; min-height: 80px; font-family: inherit; resize: vertical;">{{ bio if bio else '' }}</textarea>
 				<button type="submit">Save Profile</button>
 			</form>
 		</div>

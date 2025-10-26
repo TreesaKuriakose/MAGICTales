@@ -152,6 +152,19 @@ def update_emotion_analytics(emotion):
     # Save updated counts
     _write_json_safe(emotion_path, emotion_counts)
 
+def update_story_analytics(emotion):
+    """Update story generation analytics data for admin dashboard"""
+    base_dir = os.path.dirname(__file__)
+    story_path = os.path.join(base_dir, 'story_analytics.json')
+    story_counts = _read_json_safe(story_path, {})
+    
+    # Increment count for this emotion's story
+    current_count = story_counts.get(emotion, 0)
+    story_counts[emotion] = current_count + 1
+    
+    # Save updated counts
+    _write_json_safe(story_path, story_counts)
+
 def analyze_saved_file(filepath):
     print(f"DEBUG: Analyzing file: {filepath}")
     try:
@@ -233,6 +246,14 @@ def profile():
     error = None
     message = None
     profile_pic = session.get('profile_pic', None)
+    
+    # Get user bio from user_data.json
+    base_dir = os.path.dirname(__file__)
+    users_path = os.path.join(base_dir, 'user_data.json')
+    users = _read_json_safe(users_path, {})
+    username = session['user']
+    user_bio = users.get(username, {}).get('bio', '')
+    
     if request.method == 'POST':
         if 'profile_pic' in request.files:
             file = request.files['profile_pic']
@@ -247,18 +268,18 @@ def profile():
             if not ok:
                 error = err
             else:
-                base_dir = os.path.dirname(__file__)
-                users_path = os.path.join(base_dir, 'user_data.json')
-                users = _read_json_safe(users_path, {})
-                username = session['user']
                 if username in users:
                     users[username]['password'] = new_pw
                     _write_json_safe(users_path, users)
                     message = 'Password updated successfully.'
         elif 'edit_profile' in request.form:
-            # Placeholder: Add profile edit logic
-            message = 'Profile updated (not really, demo only).'
-    return render_template('profile.html', user=session['user'], profile_pic=profile_pic, error=error, message=message)
+            bio = request.form.get('edit_profile', '')
+            if username in users:
+                users[username]['bio'] = bio
+                _write_json_safe(users_path, users)
+                user_bio = bio
+                message = 'Profile updated successfully.'
+    return render_template('profile.html', user=session['user'], profile_pic=profile_pic, bio=user_bio, error=error, message=message)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
@@ -345,6 +366,8 @@ def story():
                     f"the once-lost traveler found not just a path, but a purpose that would illuminate their journey "
                     f"toward a happily-ever-after written in the stars themselves."
                 )
+            # Track story generation for analytics
+            update_story_analytics(emotion)
         except Exception as e:
             story = f"Could not generate story: {str(e)}"
     return render_template('story.html', emotion=emotion, story=story)
@@ -528,14 +551,54 @@ def admin_dashboard():
         emotion_stats=emotion_stats
     )
 
-@app.route('/admin/profile')
+@app.route('/admin/profile', methods=['GET', 'POST'])
 def admin_profile():
     guard = _require_admin()
     if guard is not None:
         return guard
-    # Reuse user profile page for admin basics if no dedicated template
+    
+    error = None
+    message = None
     profile_pic = session.get('admin_profile_pic', None)
-    return render_template('profile.html', user='admin', profile_pic=profile_pic, error=None, message=None)
+    
+    # Get admin bio from admin_data.json
+    base_dir = os.path.dirname(__file__)
+    admin_data_path = os.path.join(base_dir, 'admin_data.json')
+    admin_data = _read_json_safe(admin_data_path, {})
+    admin_bio = admin_data.get('bio', '')
+    
+    if request.method == 'POST':
+        # Handle profile picture upload
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            if file.filename:
+                pic_path = os.path.join(app.config['UPLOAD_FOLDER'], 'admin_profile.png')
+                file.save(pic_path)
+                session['admin_profile_pic'] = 'admin_profile.png'
+                message = 'Profile picture updated successfully.'
+        
+        # Handle password change
+        elif 'new_password' in request.form:
+            new_pw = request.form.get('new_password', '')
+            ok, err = validate_password_strength(new_pw)
+            if not ok:
+                error = err
+            else:
+                # Update admin password in a secure storage (for now, update in memory/session)
+                # In production, store this in a database with proper hashing
+                admin_data['password'] = new_pw
+                _write_json_safe(admin_data_path, admin_data)
+                message = 'Password updated successfully.'
+        
+        # Handle profile edit
+        elif 'edit_profile' in request.form:
+            bio = request.form.get('edit_profile', '')
+            admin_data['bio'] = bio
+            _write_json_safe(admin_data_path, admin_data)
+            admin_bio = bio
+            message = 'Profile updated successfully.'
+    
+    return render_template('profile.html', user='admin', profile_pic=profile_pic, bio=admin_bio, error=error, message=message)
 
 @app.route('/admin/users')
 def admin_users():
@@ -603,6 +666,23 @@ def admin_reply_feedback(feedback_id):
             break
     _write_json_safe(feedback_path, feedback)
     return redirect(url_for('admin_feedback'))
+
+@app.route('/admin/visualization')
+def admin_visualization():
+    guard = _require_admin()
+    if guard is not None:
+        return guard
+    
+    base_dir = os.path.dirname(__file__)
+    emotion_path = os.path.join(base_dir, 'emotion_analytics.json')
+    story_path = os.path.join(base_dir, 'story_analytics.json')
+    
+    emotion_counts = _read_json_safe(emotion_path, {})
+    story_counts = _read_json_safe(story_path, {})
+    
+    return render_template('admin_visualization.html', 
+                         emotion_data=emotion_counts, 
+                         story_data=story_counts)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
